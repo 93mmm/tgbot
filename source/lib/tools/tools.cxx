@@ -20,3 +20,9 @@ std::string tools::GetToken() {
 
   return result;
 }
+
+void tools::AnimateBot(int &animationCounter) {
+  const char *pending = "/-\\|";
+  animationCounter = ++animationCounter % 4;
+  printf("\x1b[2K\x1b[1F%c\n", pending[animationCounter]);
+}
