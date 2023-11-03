@@ -11,8 +11,13 @@ find_package(Threads REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(Boost COMPONENTS system REQUIRED)
 find_package(CURL)
+find_package(SQLite3)
 
-include_directories(/usr/local/include ${OPENSSL_INCLUDE_DIR} ${Boost_INCLUDE_DIR})
+
+include_directories(/usr/local/include ${OPENSSL_INCLUDE_DIR} 
+                                       ${Boost_INCLUDE_DIR}
+                                       ${SQLite3_INCLUDE_DIRS}
+)
 
 if (CURL_FOUND)
     include_directories(${CURL_INCLUDE_DIRS})
@@ -26,4 +31,10 @@ add_executable(todo_bot source/main.cxx
                         source/lib/bot/bot.h
 )
 
-target_link_libraries(todo_bot /usr/local/lib/libTgBot.a ${CMAKE_THREAD_LIBS_INIT} ${OPENSSL_LIBRARIES} ${Boost_LIBRARIES} ${CURL_LIBRARIES})
+target_link_libraries(todo_bot /usr/local/lib/libTgBot.a 
+                               ${CMAKE_THREAD_LIBS_INIT} 
+                               ${OPENSSL_LIBRARIES} 
+                               ${Boost_LIBRARIES} 
+                               ${CURL_LIBRARIES} 
+                               ${SQLite3_LIBRARIES}
+)

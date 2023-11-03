@@ -2,9 +2,23 @@
 
 #include <exception>
 
-ToDoBot::Bot::Bot() : bot(tools::GetToken()) { Init(); }
+ToDoBot::Bot::Bot() : bot(tools::GetToken()) {
+  Init();
+  database.Open("database/test.db");
+}
 
 void ToDoBot::Bot::Init() {
+  auto onStart = [&](TgBot::Message::Ptr message) {
+    bot.getApi().sendMessage(message->chat->id, "Hi, " + message->from->username + "!");
+    std::string request = "INSERT INTO Users (UserID, IsAdmin) VALUES (" + 
+                          std::to_string(message->from->id) + 
+                          ", 0)";
+    database.ExecuteRequest(request, nullptr);
+  }; 
+
+  bot.getEvents().onCommand("start", onStart);
+  bot.getEvents().onCommand("stop", onStart);
+
   auto answerToMessage = [&](Message message) {
     bot.getApi().sendMessage(message->chat->id, "Your message is: " + message->text, false, message->messageId);
   };
@@ -28,5 +42,4 @@ void ToDoBot::Bot::Run() {
   } catch (std::exception& e) {
     printf("error: %s\n", e.what());
   }
-
 }

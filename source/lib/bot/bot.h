@@ -6,21 +6,20 @@
 #include "../tools/tools.h"
 
 namespace ToDoBot {
+  using Message = TgBot::Message::Ptr;
+  using TgBotLib = TgBot::Bot;
+  using LongPoll = TgBot::TgLongPoll;
 
-using Message = TgBot::Message::Ptr;
-using TgBotLib = TgBot::Bot;
-using LongPoll = TgBot::TgLongPoll;
+  class Bot {
+    public:
+      Bot();
+      void Run();
 
-class Bot {
-public:
-Bot();
-void Run();
-
-private:
-void Init();
-TgBot::Bot bot;
-};
-
+    private:
+      void Init();
+      TgBot::Bot bot;
+      ToDoBot::SQLite3 database;
+  };
 }
 
 #endif // TODO_BOT_H
