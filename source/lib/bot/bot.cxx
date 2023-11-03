@@ -4,7 +4,7 @@
 
 ToDoBot::Bot::Bot() : bot(tools::GetToken()) {
   Init();
-  database.Open("database/test.db");
+  database.Open("database/users.db");
 }
 
 void ToDoBot::Bot::Init() {
@@ -14,12 +14,12 @@ void ToDoBot::Bot::Init() {
                           std::to_string(message->from->id) + 
                           ", 0)";
     database.ExecuteRequest(request, nullptr);
-  }; 
+  };
 
   bot.getEvents().onCommand("start", onStart);
-  bot.getEvents().onCommand("stop", onStart);
 
   auto answerToMessage = [&](Message message) {
+    if (message->text.starts_with("/start") or message->text.starts_with("/stop")) { return; }
     bot.getApi().sendMessage(message->chat->id, "Your message is: " + message->text, false, message->messageId);
   };
 
