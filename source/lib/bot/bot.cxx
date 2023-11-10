@@ -1,45 +1,48 @@
 #include "bot.h"
+#include "../tools/tools.h"
 
 #include <exception>
 
-ToDoBot::Bot::Bot() : bot(tools::GetToken()) {
+ToDoBot::Bot::Bot() : m_Bot(tools::GetToken()) {
   Init();
-  database.Open("database/users.db");
+  m_Database.Open("database/users.db");
 }
 
 void ToDoBot::Bot::Init() {
   auto onStart = [&](TgBot::Message::Ptr message) {
-    bot.getApi().sendMessage(message->chat->id, "Hi, " + message->from->username + "!");
+    m_Bot.getApi().sendMessage(message->chat->id, "Hi, " + message->from->username + "!");
     std::string request = "INSERT INTO Users (UserID, IsAdmin) VALUES (" + 
                           std::to_string(message->from->id) + 
                           ", 0)";
-    database.ExecuteRequest(request, nullptr);
+    m_Database.ExecuteRequest(request, nullptr);
   };
-
-  bot.getEvents().onCommand("start", onStart);
 
   auto answerToMessage = [&](Message message) {
     if (message->text.starts_with("/start") or message->text.starts_with("/stop")) { return; }
-    bot.getApi().sendMessage(message->chat->id, "Your message is: " + message->text, false, message->messageId);
+    m_Bot.getApi().sendMessage(message->chat->id, "Your message is: " + message->text, false, message->messageId);
   };
 
-  bot.getEvents().onAnyMessage(answerToMessage);
+  m_Bot.getEvents().onCommand("start", onStart);
+  // m_Bot.getEvents().onCommand("stop", onStop);
+  m_Bot.getEvents().onAnyMessage(answerToMessage);
 }
 
 void ToDoBot::Bot::Run() {
   int animationCounter = 0;
 
   try {
-    printf("Bot username: %s\n-\n", bot.getApi().getMe()->username.c_str());
-    bot.getApi().deleteWebhook();
+    tools::Logger::Message("Bot username:");
+    tools::Logger::Message(m_Bot.getApi().getMe()->username.c_str());
 
-    LongPoll longPoll(bot);
+    m_Bot.getApi().deleteWebhook();
+
+    LongPoll longPoll(m_Bot);
     
     while (true) {
-      tools::AnimateBot(animationCounter);
+      // tools::AnimateBot(animationCounter);
       longPoll.start();
     }
   } catch (std::exception& e) {
-    printf("error: %s\n", e.what());
+    tools::Logger::Exception(e.what());
   }
 }

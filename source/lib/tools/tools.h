@@ -5,14 +5,29 @@
 #include <string>
 #include <vector>
 
-namespace tools {
+#define DISPLAY_MESSAGES 1
+#define DISPLAY_DEBUGGING_INFO 2
+#define DISPLAY_ERRORS 4
 
+namespace tools {
   std::string GetToken();
   void AnimateBot(int &animationCounter);
 
+  class Logger { 
+  public:
+    static void SetLevel(const int &_level) { s_logLevel = _level; }
+    
+    static void Message(const char *_messagef);
+    static void DebuggingInfo(const char *_messagef);
+    static void Exception(const char *_messagef);
+
+  private:
+    static int s_logLevel;
+  };
 }
 
-namespace ToDoBot {
+// TODO: refactor
+namespace tools {
   static int FetchData(void *data, int sizeOfAnswer, char **answer, char **collumnNames);
   
   struct DataFromSql {

@@ -1,6 +1,4 @@
 #pragma once
-#ifndef TODO_BOT_H
-#define TODO_BOT_H
 
 #include <tgbot/tgbot.h>
 #include "../tools/tools.h"
@@ -17,9 +15,7 @@ namespace ToDoBot {
 
     private:
       void Init();
-      TgBot::Bot bot;
-      ToDoBot::SQLite3 database;
+      TgBot::Bot m_Bot;
+      tools::SQLite3 m_Database;
   };
 }
-
-#endif // TODO_BOT_H
