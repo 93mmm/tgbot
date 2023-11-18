@@ -4,75 +4,84 @@
 
 #define ENVIOREMENT_FILE "env.txt"
 
+#define RED "\x1b[38;5;196m"
+#define YELLOW "\x1b[38;5;118m"
+#define GREEN "\x1b[38;5;228m"
+#define END "\x1b[0m"
+
+#define ERROR "[WARN]\t"
+#define MESSAGE "[MSG]\t"
+#define INFO "[INF]\t"
+
 int tools::Logger::s_logLevel = 0;
 
 std::string tools::GetToken() {
   std::ifstream file(ENVIOREMENT_FILE);
   std::string result;
 
-  if (file.is_open()) {
-    getline(file, result);
-    file.close();
-    return result;
+  if (not file.is_open()) { 
+    tools::Logger::Error(FILE_ERROR, "Missing required file " ENVIOREMENT_FILE);
+    exit(1);
   }
-  tools::Logger::Exception("missing required file " ENVIOREMENT_FILE "\n");
-  exit(1);
+  
+  getline(file, result);
+  file.close();
+
+  if (result == "place your token here") {
+    tools::Logger::Error(FILE_ERROR, "Insert your token");
+    exit(1);
+  }
+
+  return result;
 }
 
-void tools::AnimateBot(int &animationCounter) {
-  const char *pending = "/-\\|";
-  animationCounter = ++animationCounter % 4;
-  printf("\x1b[2K\x1b[1F%c\n", pending[animationCounter]);
-}
-
-void tools::Logger::Message(const char *_messagef) {
-  if (not (s_logLevel & DISPLAY_MESSAGES)) { return; }
-  printf("\x1b[38;5;118m[MSG]\t\x1b[0m%s\n", _messagef);
+void tools::Logger::Error(const char *_errorType, const char *_messagef) {
+  if (not (s_logLevel & DISPLAY_ERRORS)) { return; }
+  printf(RED ERROR END "(%s)\n\t%s\n", _errorType, _messagef);
 }
 
 void tools::Logger::DebuggingInfo(const char *_messagef) {
   if (not (s_logLevel & DISPLAY_DEBUGGING_INFO)) { return; }
-  printf("\x1b[38;5;228m[INF]\t\x1b[0m%s\n", _messagef);
+  printf(YELLOW INFO END "%s\n", _messagef);
 }
 
-void tools::Logger::Exception(const char *_messagef) {
-  if (not (s_logLevel & DISPLAY_ERRORS)) { return; }
-  printf("\x1b[38;5;196m[ERR]\t\x1b[0m%s\n", _messagef);
+void tools::Logger::Message(const char *_messagef) {
+  if (not (s_logLevel & DISPLAY_MESSAGES)) { return; }
+  printf(GREEN MESSAGE END "%s\n" YELLOW END, _messagef);
 }
 
-int tools::FetchData(void *data, int sizeOfAnswer, char **answer, char **collumnNames) {
-  if (data == nullptr) { return 0; }
+int tools::FetchData(void *_data, int _sizeOfAnswer, char **_answer, char **_collumnNames) {
+  if (_data == nullptr) { return 0; }
 
-  DataFromSql *collectedData = (DataFromSql *)data;
-  for (int i = 0; i < sizeOfAnswer; i++) {
-    collectedData->data[collumnNames[i]].push_back(answer[i]);
+  DataFromSql *collectedData = (DataFromSql *)_data;
+  for (int i = 0; i < _sizeOfAnswer; i++) {
+    collectedData->data[_collumnNames[i]].push_back(_answer[i]);
   }
   return 0;
 }
 
-tools::Result tools::SQLite3::Open(std::string fileName) {
-  if (sqlite3_open(fileName.c_str(), &m_DB)) {
+int tools::SQLite3::Open(const char *_fileName) {
+  if (sqlite3_open(_fileName, &m_DB)) {
     printf("Can't open database: %s\n", sqlite3_errmsg(m_DB));
-    return Result::failure;
+    return 1;
   } 
   printf("Database opened successfully!\n");
-  return Result::success;
+  return 0;
 }
 
 tools::SQLite3::~SQLite3() {
   sqlite3_close(m_DB);
 }
 
-void tools::SQLite3::ExecuteRequest(const std::string &request, tools::DataFromSql *data=nullptr) {
+void tools::SQLite3::ExecuteRequest(const char *_request, tools::DataFromSql *_data=nullptr) {
   char *errorMessage;
 
   if (
-    sqlite3_exec(m_DB, request.c_str(), FetchData, data, &errorMessage) != SQLITE_OK
-    or
-    data == nullptr
+    sqlite3_exec(m_DB, _request, FetchData, _data, &errorMessage) != SQLITE_OK
+    or _data == nullptr
     ) { return; }
 
-  for (const auto &[key, value] : data->data) {
+  for (const auto &[key, value] : _data->data) {
     printf("%s: ", key.c_str());
     for (const auto &i : value) { printf("%s, ", i.c_str()); }
 

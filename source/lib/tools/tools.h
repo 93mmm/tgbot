@@ -9,24 +9,27 @@
 #define DISPLAY_DEBUGGING_INFO 2
 #define DISPLAY_ERRORS 4
 
+#define FILE_ERROR "file error"
+#define DB_ERROR "databse error"
+#define TGBOT_ERROR "telegram bot error"
+
 namespace tools {
   std::string GetToken();
-  void AnimateBot(int &animationCounter);
 
   class Logger { 
   public:
     static void SetLevel(const int &_level) { s_logLevel = _level; }
     
+    static void Error(const char *_error_type,
+                      const char *_messagef);
     static void Message(const char *_messagef);
     static void DebuggingInfo(const char *_messagef);
-    static void Exception(const char *_messagef);
 
   private:
     static int s_logLevel;
   };
 }
 
-// TODO: refactor
 namespace tools {
   static int FetchData(void *data, int sizeOfAnswer, char **answer, char **collumnNames);
   
@@ -34,17 +37,11 @@ namespace tools {
     std::unordered_map<std::string, std::vector<std::string> > data;
   };
 
-  enum Result {
-    success,
-    failure
-  };
-
   class SQLite3 {
-
   public:
-    Result Open(std::string fileName);
+    int Open(const char *_fileName);
     ~SQLite3();
-    void ExecuteRequest(const std::string &request, DataFromSql *data);
+    void ExecuteRequest(const char *request, DataFromSql *data);
 
   private:
     sqlite3 *m_DB = nullptr;
