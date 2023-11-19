@@ -5,7 +5,8 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "/opt/homebrew/Cellar",
-                "/opt/homebrew/Cellar/boost/1.82.0_1/include"
+                "/opt/homebrew/Cellar/boost/1.82.0_1/include",
+                "/opt/homebrew/Cellar/nlohmann-json/3.11.2/include"
             ],
             "defines": [],
             "macFrameworkPath": [

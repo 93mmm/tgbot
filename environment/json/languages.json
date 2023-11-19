@@ -1,0 +1,100 @@
+{
+  "en": {
+    "main-menu": {
+      "text": "Main menu",
+      "buttons": [
+        {
+          "text": "Tasks",
+          "query": "tasks-query",
+          "enabled": true
+        },
+        {
+          "text": "Drink water",
+          "query": "drink-water-query",
+          "enabled": true
+        },
+        {
+          "text": "Contact with the creator",
+          "query": "contacted",
+          "enabled": true,
+          "url": "tg://user?id=1298547601"
+        },
+        {
+          "enabled": false
+        }
+      ]
+    },
+    "water": {
+      "text": "how much water was drunk?",
+      "buttons": [
+        {
+          "text": "<< Main menu",
+          "query": "main-menu",
+          "enabled": true
+        },
+        {
+          "enabled": false
+        },
+        {
+          "text": "Add 100 ml",
+          "query": "add-100",
+          "enabled": true
+        },
+        {
+          "text": "Add 200 ml",
+          "query": "add-200",
+          "enabled": true
+        },
+        {
+          "text": "Add 300 ml",
+          "query": "add-300",
+          "enabled": true
+        },
+        {
+          "text": "Add 400 ml",
+          "query": "add-400",
+          "enabled": true
+        },
+        {
+          "text": "Add another volume",
+          "query": "add-another",
+          "enabled": true
+        },
+        {
+          "enabled": false
+        }
+      ]
+    },
+    "tasks": {
+      "text": "What do you want to do?",
+      "buttons": [
+        {
+          "text": "<< Main menu",
+          "query": "main-menu",
+          "enabled": true
+        },
+        {
+          "enabled": false
+        },
+        {
+          "text": "Add task",
+          "query": "add-task",
+          "enabled": true
+        },
+        {
+          "enabled": false
+        },
+        {
+          "text": "Send current tasks",
+          "query": "add-task",
+          "enabled": true
+        },
+        {
+          "text": "Send completed tasks",
+          "query": "add-task",
+          "enabled": true
+        }
+      ]
+    }
+  }
+}

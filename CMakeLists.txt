@@ -12,7 +12,7 @@ find_package(OpenSSL REQUIRED)
 find_package(Boost COMPONENTS system REQUIRED)
 find_package(CURL)
 find_package(SQLite3)
-
+find_package(nlohmann_json 3.2.0 REQUIRED)
 
 include_directories(/usr/local/include ${OPENSSL_INCLUDE_DIR} 
                                        ${Boost_INCLUDE_DIR}
@@ -25,10 +25,12 @@ if (CURL_FOUND)
 endif()
 
 add_executable(todo_bot source/main.cxx
-                        source/lib/tools/tools.cxx
                         source/lib/tools/tools.h
+                        source/lib/tools/tools.cxx
                         source/lib/bot/bot.cxx
                         source/lib/bot/bot.h
+                        source/lib/messages/messages.cxx
+                        source/lib/messages/messages.h
 )
 
 target_link_libraries(todo_bot /usr/local/lib/libTgBot.a 
@@ -37,4 +39,5 @@ target_link_libraries(todo_bot /usr/local/lib/libTgBot.a
                                ${Boost_LIBRARIES} 
                                ${CURL_LIBRARIES} 
                                ${SQLite3_LIBRARIES}
+                               ${nlohmann_json_LIBRARIES}
 )

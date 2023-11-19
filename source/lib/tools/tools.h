@@ -9,9 +9,9 @@
 #define DISPLAY_DEBUGGING_INFO 2
 #define DISPLAY_ERRORS 4
 
-#define FILE_ERROR "file error"
-#define DB_ERROR "databse error"
-#define TGBOT_ERROR "telegram bot error"
+#define FILE_ERROR "File error"
+#define DB_ERROR "Databse error"
+#define TGBOT_ERROR "Telegram bot error"
 
 namespace tools {
   std::string GetToken();
@@ -39,11 +39,17 @@ namespace tools {
 
   class SQLite3 {
   public:
-    int Open(const char *_fileName);
+    SQLite3(const SQLite3 &) = delete;
     ~SQLite3();
-    void ExecuteRequest(const char *request, DataFromSql *data);
 
+    static SQLite3 &Get();
+    void Init(const char *_fileName);
+
+
+    void ExecuteRequest(const char *_request, DataFromSql *_data);
   private:
+    SQLite3() {}
+    static SQLite3 s_Instance;
     sqlite3 *m_DB = nullptr;
   };
 }

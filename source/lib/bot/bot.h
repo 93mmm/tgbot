@@ -23,7 +23,6 @@ namespace ToDoBot {
       void InitTasksKB();
       
       TgBot::Bot m_Bot;
-      tools::SQLite3 m_Database;
 
       std::unordered_map<std::string, TgBot::InlineKeyboardMarkup::Ptr> keyboards;
   };

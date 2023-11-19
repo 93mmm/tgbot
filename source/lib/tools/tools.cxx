@@ -14,6 +14,8 @@
 #define INFO "[INF]\t"
 
 int tools::Logger::s_logLevel = 0;
+tools::SQLite3 tools::SQLite3::s_Instance;
+
 
 std::string tools::GetToken() {
   std::ifstream file(ENVIOREMENT_FILE);
@@ -60,20 +62,20 @@ int tools::FetchData(void *_data, int _sizeOfAnswer, char **_answer, char **_col
   return 0;
 }
 
-int tools::SQLite3::Open(const char *_fileName) {
-  if (sqlite3_open(_fileName, &m_DB)) {
-    printf("Can't open database: %s\n", sqlite3_errmsg(m_DB));
-    return 1;
-  } 
-  printf("Database opened successfully!\n");
-  return 0;
-}
-
 tools::SQLite3::~SQLite3() {
   sqlite3_close(m_DB);
 }
 
-void tools::SQLite3::ExecuteRequest(const char *_request, tools::DataFromSql *_data=nullptr) {
+tools::SQLite3 &tools::SQLite3::Get() { return s_Instance; }
+
+void tools::SQLite3::Init(const char *_fileName) {
+  if (sqlite3_open(_fileName, &m_DB)) {
+    Logger::Error(DB_ERROR, "Can't open database");
+    exit(1);
+  }
+}
+
+void tools::SQLite3::ExecuteRequest(const char *_request, DataFromSql *_data) {
   char *errorMessage;
 
   if (

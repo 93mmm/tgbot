@@ -25,8 +25,6 @@ ToDoBot::Bot::Bot() : m_Bot(tools::GetToken()) {
   InitCommands();
   InitKeyboards();
   InitCallbacks();
-
-  m_Database.Open("database/users.db");
 }
 
 void ToDoBot::Bot::InitCallbacks() {
@@ -44,7 +42,7 @@ void ToDoBot::Bot::InitCallbacks() {
     std::string request = "INSERT INTO Users (UserID, IsAdmin) VALUES (" + 
                           std::to_string(_message->from->id) + 
                           ", 0)";
-    m_Database.ExecuteRequest(request.c_str(), nullptr);
+    tools::SQLite3::Get().ExecuteRequest(request.c_str(), nullptr);
   };
 
   auto OnMenu = [&](Message _message) {
