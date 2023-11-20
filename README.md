@@ -5,7 +5,7 @@ todo-list telegram bot
 ```SQL
 CREATE TABLE "Users" (
 	"UserID"	INTEGER NOT NULL UNIQUE,
-	"IsAdmin"	BOOLEAN NOT NULL,
+	"IsAdmin"	BOOLEAN NOT NULL DEFAULT 0,
   "Language" TEXT NOT NULL DEFAULT 'en',
 	PRIMARY KEY("UserID" AUTOINCREMENT)
 );
