@@ -1,16 +1,129 @@
 {
+  "ru": {
+    "main-menu": {
+      "text": "Главное меню",
+      "buttons": [
+        {
+          "text": "Задачи",
+          "query": "tasks-menu",
+          "enabled": true
+        },
+        {
+          "text": "Выпить воды",
+          "query": "drink-water-menu",
+          "enabled": true
+        },
+        {
+          "text": "Написать создателю бота",
+          "query": "contacted",
+          "enabled": true,
+          "url": "tg://user?id=1298547601"
+        },
+        {
+          "enabled": false
+        }
+      ]
+    },
+    "water": {
+      "text": "Сколько воды выпили?",
+      "buttons": [
+        {
+          "text": "<< Главное меню",
+          "query": "main-menu",
+          "enabled": true
+        },
+        {
+          "enabled": false
+        },
+        {
+          "text": "Добавить 100 мл",
+          "query": "add-100",
+          "enabled": true
+        },
+        {
+          "text": "Добавить 200 мл",
+          "query": "add-200",
+          "enabled": true
+        },
+        {
+          "text": "Добавить 300 мл",
+          "query": "add-300",
+          "enabled": true
+        },
+        {
+          "text": "Добавить 400 мл",
+          "query": "add-400",
+          "enabled": true
+        },
+        {
+          "text": "Добавить другое количество",
+          "query": "add-another",
+          "enabled": true
+        },
+        {
+          "enabled": false
+        }
+      ]
+    },
+    "tasks": {
+      "text": "Что вы хотите сделать?",
+      "buttons": [
+        {
+          "text": "<< Главное меню",
+          "query": "main-menu",
+          "enabled": true
+        },
+        {
+          "enabled": false
+        },
+        {
+          "text": "Добавить задачу",
+          "query": "add-task",
+          "enabled": true
+        },
+        {
+          "enabled": false
+        },
+        {
+          "text": "Получить текущие задачи",
+          "query": "send-current-tasks",
+          "enabled": true
+        },
+        {
+          "text": "Получить завершённые задачи",
+          "query": "send-completed-tasks",
+          "enabled": true
+        }
+      ]
+    },
+    "languages": {
+      "text": "Привет!\nВыбери свой язык!",
+      "buttons": [
+        {
+          "text": "🇬🇧 English",
+          "query": "language-en",
+          "enabled": true
+        },
+        {
+          "text": "🇷🇺 Русский",
+          "query": "language-ru",
+          "enabled": true
+        }
+      ]
+    }
+  },
   "en": {
     "main-menu": {
       "text": "Main menu",
       "buttons": [
         {
           "text": "Tasks",
-          "query": "tasks-query",
+          "query": "tasks-menu",
           "enabled": true
         },
         {
           "text": "Drink water",
-          "query": "drink-water-query",
+          "query": "drink-water-menu",
           "enabled": true
         },
         {
@@ -25,7 +138,7 @@
       ]
     },
     "water": {
-      "text": "how much water was drunk?",
+      "text": "How much water was drunk?",
       "buttons": [
         {
           "text": "<< Main menu",
@@ -86,12 +199,27 @@
         },
         {
           "text": "Send current tasks",
-          "query": "add-task",
+          "query": "send-current-tasks",
           "enabled": true
         },
         {
           "text": "Send completed tasks",
-          "query": "add-task",
+          "query": "send-completed-tasks",
+          "enabled": true
+        }
+      ]
+    },
+    "languages": {
+      "text": "Hello!\nChoose your language!",
+      "buttons": [
+        {
+          "text": "🇬🇧 English",
+          "query": "language-en",
+          "enabled": true
+        },
+        {
+          "text": "🇷🇺 Русский",
+          "query": "language-ru",
           "enabled": true
         }
       ]

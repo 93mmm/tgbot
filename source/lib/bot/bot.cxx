@@ -1,79 +1,97 @@
 #include "bot.h"
 #include "../tools/tools.h"
+#include "../messages/messages.h"
 
+#include <_types/_uint64_t.h>
 #include <exception>
-
-#define BACK_TO_MAIN_MENU "back"
-
-#define MAIN_KEYBOARD "main-kb"
-#define DRINK_WATER "drink-water"
-#define TASKS "tasks"
-
-#define WATER_KEYBOARD "water-kb"
-#define ADD_100_ML "add-100"
-#define ADD_200_ML "add-200"
-#define ADD_300_ML "add-300"
-#define ADD_400_ML "add-400"
-#define ADD_ANOTHER "add-another"
-
-#define TASKS_KEYBOARD "tasks-kb"
-#define NEW_TASK "add-new-task"
-#define SEND_UNCOMPLETED_TASKS "send-uc-tasks"
-#define SEND_COMPLETED_TASKS "send-c-tasks"
 
 ToDoBot::Bot::Bot() : m_Bot(tools::GetToken()) {
   InitCommands();
-  InitKeyboards();
   InitCallbacks();
 }
 
 void ToDoBot::Bot::InitCallbacks() {
   auto IsMessageCommand = [](const std::string &_message) {
     if (
-      _message.starts_with("/start") 
-      or _message.starts_with("/menu")
+      _message.starts_with("/start") or
+      _message.starts_with("/menu") or 
+      _message.starts_with("/language")
       ) { return true; }
     return false;
   };
 
-  auto OnStart = [&](TgBot::Message::Ptr _message) {
-    m_Bot.getApi().deleteMessage(_message->chat->id, _message->messageId);
-    m_Bot.getApi().sendMessage(_message->chat->id, "Hi, " + _message->from->username + "!");
-    std::string request = "INSERT INTO Users (UserID, IsAdmin) VALUES (" + 
-                          std::to_string(_message->from->id) + 
-                          ", 0)";
-    tools::SQLite3::Get().ExecuteRequest(request.c_str(), nullptr);
+  auto OnStart = [&](TgBot::Message::Ptr _message) { // TODO: greet, select language
+    uint64_t id = _message->from->id;
+    tools::SQLite3::Get().AddUser(id);
+    tools::SQLite3::Get().GetLanguage(id);
+
+    ToDoBot::Message answer = ToDoBot::Languages::Get().GetMessage(tools::SQLite3::Get().GetLanguage(id), LANGUAGE_MESSAGE);
+
+    DeleteMessage(_message->chat->id, _message->messageId);
+    m_Bot.getApi().sendMessage(_message->chat->id, answer.text, false, 0, answer.keyboard);
   };
 
-  auto OnMenu = [&](Message _message) {
-    m_Bot.getApi().deleteMessage(_message->chat->id, _message->messageId);
-    m_Bot.getApi().sendMessage(_message->chat->id, "Main menu:", false, 0, keyboards[MAIN_KEYBOARD]);
+  auto OnMenu = [&](TgBot::Message::Ptr _message) {
+    int64_t id = _message->chat->id;
+    ToDoBot::Message answer = ToDoBot::Languages::Get().GetMessage(tools::SQLite3::Get().GetLanguage(id), MAIN_MESSAGE);
+
+    DeleteMessage(id, _message->messageId);
+    m_Bot.getApi().sendMessage(id, answer.text, false, 0, answer.keyboard);
   };
 
-  auto AnswerToMessage = [&](Message _message) {
+  auto OnLanguageSelect = [&](TgBot::Message::Ptr _message) {
+    // TODO: select language
+    DeleteMessage(_message->chat->id, _message->messageId);
+  };
+
+  auto AnswerToMessage = [&](TgBot::Message::Ptr _message) {
     if (IsMessageCommand(_message->text)) { return; }
-    m_Bot.getApi().deleteMessage(_message->chat->id, _message->messageId);
+    DeleteMessage(_message->chat->id, _message->messageId);
     // m_Bot.getApi().sendMessage(_message->chat->id, "Your message is: " + _message->text, false, _message->messageId);
   };
 
   auto OnCallbackQuery = [&](TgBot::CallbackQuery::Ptr _query) {
-    if (_query->data.starts_with(DRINK_WATER)) {
-      m_Bot.getApi().editMessageText("Edited", _query->message->chat->id,
-                                     _query->message->messageId, "", "", false,
-                                     keyboards[WATER_KEYBOARD]);
-    } else if (_query->data.starts_with(TASKS)) {
-      m_Bot.getApi().editMessageText("What do you want to do?", _query->message->chat->id,
-                                     _query->message->messageId, "", "", false,
-                                     keyboards[TASKS_KEYBOARD]);
-    } else if (_query->data.starts_with(BACK_TO_MAIN_MENU)) {
-      m_Bot.getApi().editMessageText("Main menu:", _query->message->chat->id,
-                                     _query->message->messageId, "", "", false,
-                                     keyboards[MAIN_KEYBOARD]);
+    int64_t chat_id = _query->message->chat->id;
+    int32_t msq_id = _query->message->messageId;
+    std::string lang = tools::SQLite3::Get().GetLanguage(chat_id);
+    
+    // TODO: edit order
+    if (_query->data.starts_with(Query::Get().GetQuery(Queries::water_menu))) {
+      ToDoBot::Message answer = ToDoBot::Languages::Get().GetMessage(lang, WATER_MESSAGE);
+      m_Bot.getApi().editMessageText(answer.text, chat_id,
+                                     msq_id, "", "", false,
+                                     answer.keyboard);
+
+    } else if (_query->data.starts_with(Query::Get().GetQuery(Queries::tasks_menu))) {
+      ToDoBot::Message answer = ToDoBot::Languages::Get().GetMessage(lang, TASKS_MESSAGE);
+      m_Bot.getApi().editMessageText(answer.text, chat_id,
+                                     msq_id, "", "", false,
+                                     answer.keyboard);
+
+    } else if (_query->data.starts_with(Query::Get().GetQuery(Queries::main_menu))) {
+      ToDoBot::Message answer = ToDoBot::Languages::Get().GetMessage(lang, MAIN_MESSAGE);
+      m_Bot.getApi().editMessageText(answer.text, chat_id,
+                                     msq_id, "", "", false,
+                                     answer.keyboard);
+    } else if (_query->data.starts_with(Query::Get().GetQuery(Queries::language_en))) {
+      tools::SQLite3::Get().ChangeLanguage(_query->from->id, "en");
+      ToDoBot::Message answer = ToDoBot::Languages::Get().GetMessage("en", MAIN_MESSAGE);
+      m_Bot.getApi().editMessageText(answer.text, chat_id,
+                                     msq_id, "", "", false,
+                                     answer.keyboard);
+    } else if (_query->data.starts_with(Query::Get().GetQuery(Queries::language_ru))) {
+      printf("%s\n", _query->data.c_str());
+      tools::SQLite3::Get().ChangeLanguage(_query->from->id, "ru");
+      ToDoBot::Message answer = ToDoBot::Languages::Get().GetMessage("ru", MAIN_MESSAGE);
+      m_Bot.getApi().editMessageText(answer.text, chat_id,
+                                     msq_id, "", "", false,
+                                     answer.keyboard);
     }
   };
 
   m_Bot.getEvents().onCommand("start", OnStart);
   m_Bot.getEvents().onCommand("menu", OnMenu);
+  m_Bot.getEvents().onCommand("language", OnLanguageSelect);
   m_Bot.getEvents().onAnyMessage(AnswerToMessage);
   m_Bot.getEvents().onCallbackQuery(OnCallbackQuery);
 }
@@ -91,116 +109,12 @@ void ToDoBot::Bot::InitCommands() {
   cmd->description = "get menu"; 
   commands.push_back(cmd);
 
+  cmd = TgBot::BotCommand::Ptr(new TgBot::BotCommand);
+  cmd->command = "language";
+  cmd->description = "change language"; 
+  commands.push_back(cmd);
+
   m_Bot.getApi().setMyCommands(commands);
-}
-
-void ToDoBot::Bot::InitKeyboards() {
-  InitMainKB();
-  InitWaterKB();
-  InitTasksKB();
-}
-
-void ToDoBot::Bot::InitMainKB() {
-  TgBot::InlineKeyboardMarkup::Ptr mainKeyboard(new TgBot::InlineKeyboardMarkup);
-  
-  std::vector<TgBot::InlineKeyboardButton::Ptr> row0;
-  {
-    TgBot::InlineKeyboardButton::Ptr btn(new TgBot::InlineKeyboardButton);
-    row0.push_back(btn);
-    btn->text = "Tasks";
-    btn->callbackData = TASKS;
-  } {
-    TgBot::InlineKeyboardButton::Ptr btn(new TgBot::InlineKeyboardButton);
-    row0.push_back(btn);
-    btn->text = "Drink water";
-    btn->callbackData = DRINK_WATER;
-  }
-
-  std::vector<TgBot::InlineKeyboardButton::Ptr> row1;
-  {
-    TgBot::InlineKeyboardButton::Ptr btn(new TgBot::InlineKeyboardButton);
-    row1.push_back(btn);
-    btn->text = "Contact with the creator";
-    btn->url = "tg://user?id=1298547601";
-  }
-  mainKeyboard->inlineKeyboard.push_back(row0);
-  mainKeyboard->inlineKeyboard.push_back(row1);
-  keyboards[MAIN_KEYBOARD] = mainKeyboard;
-}
-
-void ToDoBot::Bot::InitWaterKB() {
-  TgBot::InlineKeyboardMarkup::Ptr drinkWaterKeyboard(new TgBot::InlineKeyboardMarkup);
-
-  std::vector<TgBot::InlineKeyboardButton::Ptr> row;
-  std::vector<TgBot::InlineKeyboardButton::Ptr> row0;
-  std::vector<TgBot::InlineKeyboardButton::Ptr> row1;
-  std::vector<TgBot::InlineKeyboardButton::Ptr> row2;
-  {
-    TgBot::InlineKeyboardButton::Ptr btn(new TgBot::InlineKeyboardButton);
-    row.push_back(btn);
-    btn->text = "<< Main menu";
-    btn->callbackData = BACK_TO_MAIN_MENU;
-  } {
-    TgBot::InlineKeyboardButton::Ptr btn(new TgBot::InlineKeyboardButton);
-    row0.push_back(btn);
-    btn->text = "Add 100 ml";
-    btn->callbackData = ADD_100_ML;
-  } {
-    TgBot::InlineKeyboardButton::Ptr btn(new TgBot::InlineKeyboardButton);
-    row0.push_back(btn);
-    btn->text = "Add 200 ml";
-    btn->callbackData = ADD_200_ML;
-  } {
-    TgBot::InlineKeyboardButton::Ptr btn(new TgBot::InlineKeyboardButton);
-    row1.push_back(btn);
-    btn->text = "Add 300 ml";
-    btn->callbackData = ADD_300_ML;
-  } {
-    TgBot::InlineKeyboardButton::Ptr btn(new TgBot::InlineKeyboardButton);
-    row1.push_back(btn);
-    btn->text = "Add 400 ml";
-    btn->callbackData = ADD_400_ML;
-  } {
-    TgBot::InlineKeyboardButton::Ptr btn(new TgBot::InlineKeyboardButton);
-    row2.push_back(btn);
-    btn->text = "Add another volume...";
-    btn->callbackData = ADD_ANOTHER;
-  }
-
-  drinkWaterKeyboard->inlineKeyboard.push_back(row);
-  drinkWaterKeyboard->inlineKeyboard.push_back(row0);
-  drinkWaterKeyboard->inlineKeyboard.push_back(row1);
-  drinkWaterKeyboard->inlineKeyboard.push_back(row2);
-  keyboards[WATER_KEYBOARD] = drinkWaterKeyboard;
-}
-
-void ToDoBot::Bot::InitTasksKB() {
-  TgBot::InlineKeyboardMarkup::Ptr tasksKeyboard(new TgBot::InlineKeyboardMarkup);
-  
-  std::vector<TgBot::InlineKeyboardButton::Ptr> row0;
-  {
-    TgBot::InlineKeyboardButton::Ptr btn(new TgBot::InlineKeyboardButton);
-    row0.push_back(btn);
-    btn->text = "Add task";
-    btn->callbackData = NEW_TASK;
-  }
-
-  std::vector<TgBot::InlineKeyboardButton::Ptr> row1;
-  {
-    TgBot::InlineKeyboardButton::Ptr btn(new TgBot::InlineKeyboardButton);
-    row1.push_back(btn);
-    btn->text = "Send current tasks";
-    btn->callbackData = SEND_UNCOMPLETED_TASKS;
-  } {
-    TgBot::InlineKeyboardButton::Ptr btn(new TgBot::InlineKeyboardButton);
-    row1.push_back(btn);
-    btn->text = "Send completed tasks";
-    btn->callbackData = SEND_COMPLETED_TASKS;
-  }
-
-  tasksKeyboard->inlineKeyboard.push_back(row0);
-  tasksKeyboard->inlineKeyboard.push_back(row1);
-  keyboards[TASKS_KEYBOARD] = tasksKeyboard;
 }
 
 void ToDoBot::Bot::Run() {
@@ -210,11 +124,19 @@ void ToDoBot::Bot::Run() {
 
     m_Bot.getApi().deleteWebhook();
 
-    LongPoll longPoll(m_Bot);
+    TgBot::TgLongPoll longPoll(m_Bot);
     
     while (true) {
       longPoll.start();
     }
+  } catch (std::exception& e) {
+    tools::Logger::Error(TGBOT_ERROR, e.what());
+  }
+}
+
+void ToDoBot::Bot::DeleteMessage(int64_t _chatId, int32_t _msgId) {
+  try {
+    m_Bot.getApi().deleteMessage(_chatId, _msgId);
   } catch (std::exception& e) {
     tools::Logger::Error(TGBOT_ERROR, e.what());
   }

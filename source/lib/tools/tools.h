@@ -14,12 +14,13 @@
 #define TGBOT_ERROR "Telegram bot error"
 
 namespace tools {
+  void concatenate(const char *_result, const char *_one, const char *_two);
   std::string GetToken();
 
   class Logger { 
   public:
     static void SetLevel(const int &_level) { s_logLevel = _level; }
-    
+
     static void Error(const char *_error_type,
                       const char *_messagef);
     static void Message(const char *_messagef);
@@ -31,22 +32,22 @@ namespace tools {
 }
 
 namespace tools {
-  static int FetchData(void *data, int sizeOfAnswer, char **answer, char **collumnNames);
-  
-  struct DataFromSql {
-    std::unordered_map<std::string, std::vector<std::string> > data;
-  };
-
   class SQLite3 {
   public:
+    struct DataFromSql {
+      std::unordered_map<std::string, std::vector<std::string> > data;
+    };
+    
     SQLite3(const SQLite3 &) = delete;
-    ~SQLite3();
-
     static SQLite3 &Get();
-    void Init(const char *_fileName);
 
+    void Init(const char *_fileName);
+    void ReleaseDatabase();
 
     void ExecuteRequest(const char *_request, DataFromSql *_data);
+    void AddUser(int64_t _id);
+    void ChangeLanguage(int64_t _id, const char *_lang);
+    std::string GetLanguage(int64_t _id);
   private:
     SQLite3() {}
     static SQLite3 s_Instance;

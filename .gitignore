@@ -1,3 +1,4 @@
 build/
 todo_bot
 .vscode/settings.json
+.cache
