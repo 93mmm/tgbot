@@ -93,7 +93,7 @@ void tools::SQLite3::ExecuteRequest(const char *_request, DataFromSql *_data) {
   }
 }
 
-void tools::SQLite3::AddUser(int64_t _id) { // TODO: rebase on c-style strings
+void tools::SQLite3::AddUser(int64_t _id) {
   std::string request = "INSERT INTO Users (UserID) VALUES (" + 
                         std::to_string(_id) + ")";
   ExecuteRequest(request.c_str(), nullptr);

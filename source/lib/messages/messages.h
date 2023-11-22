@@ -12,6 +12,9 @@
 #define WATER_MESSAGE "water"
 #define LANGUAGE_MESSAGE "languages"
 
+#define ENGLISH_LANG "en"
+#define RUSSIAN_LANG "ru"
+
 namespace ToDoBot {
 enum class Queries {
   main_menu,

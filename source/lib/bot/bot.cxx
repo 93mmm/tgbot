@@ -4,6 +4,7 @@
 
 #include <cstdio>
 #include <exception>
+#include <sys/_types/_int32_t.h>
 
 ToDoBot::Bot::Bot(std::string _token) : m_Bot(_token) {
   InitCommands();
@@ -20,29 +21,32 @@ void ToDoBot::Bot::InitCallbacks() {
     return false;
   };
 
-  auto OnStart = [&](TgBot::Message::Ptr _message) { // TODO: greet, select language
-    int64_t id = _message->from->id;
-    tools::SQLite3::Get().AddUser(id);
+  auto OnStart = [&](TgBot::Message::Ptr _message) {
+    int64_t fromId = _message->from->id;
+    int64_t chatId = _message->chat->id;
+    
+    tools::SQLite3::Get().AddUser(fromId);
 
-    ToDoBot::Message answer = ToDoBot::Languages::Get().GetMessage(tools::SQLite3::Get().GetLanguage(id), LANGUAGE_MESSAGE);
+    ToDoBot::Message answer = ToDoBot::Languages::Get().GetMessage(tools::SQLite3::Get().GetLanguage(fromId), LANGUAGE_MESSAGE);
 
-    DeleteMessage(_message->chat->id, _message->messageId);
-    SendMessage(_message->chat->id, answer.text, answer.keyboard);
+    DeleteMessage(chatId, _message->messageId);
+    SendMessage(chatId, answer.text, answer.keyboard);
   };
 
   auto OnMenu = [&](TgBot::Message::Ptr _message) {
-    int64_t id = _message->chat->id;
-    ToDoBot::Message answer = ToDoBot::Languages::Get().GetMessage(tools::SQLite3::Get().GetLanguage(id), MAIN_MESSAGE);
+    int64_t chatId = _message->chat->id;
+    ToDoBot::Message answer = ToDoBot::Languages::Get().GetMessage(tools::SQLite3::Get().GetLanguage(chatId), MAIN_MESSAGE);
 
-    DeleteMessage(id, _message->messageId);
-    SendMessage(id, answer.text, answer.keyboard);
+    DeleteMessage(chatId, _message->messageId);
+    SendMessage(chatId, answer.text, answer.keyboard);
   };
 
   auto OnLanguageSelect = [&](TgBot::Message::Ptr _message) {
-    int64_t _chatId = _message->chat->id;
-    ToDoBot::Message answer = ToDoBot::Languages::Get().GetMessage(tools::SQLite3::Get().GetLanguage(_chatId), LANGUAGE_MESSAGE);
-    DeleteMessage(_chatId, _message->messageId);
-    SendMessage(_chatId, answer.text, answer.keyboard);
+    int64_t chatId = _message->chat->id;
+    ToDoBot::Message answer = ToDoBot::Languages::Get().GetMessage(tools::SQLite3::Get().GetLanguage(chatId), LANGUAGE_MESSAGE);
+
+    DeleteMessage(chatId, _message->messageId);
+    SendMessage(chatId, answer.text, answer.keyboard);
   };
 
   auto AnswerToMessage = [&](TgBot::Message::Ptr _message) {
@@ -85,14 +89,14 @@ void ToDoBot::Bot::InitCallbacks() {
       case Queries::send_current_tasks: { break; }
       case Queries::send_completed_tasks: { break; }
       case Queries::language_ru: {
-        tools::SQLite3::Get().ChangeLanguage(fromId, "ru");
-        ToDoBot::Message answer = ToDoBot::Languages::Get().GetMessage("ru", MAIN_MESSAGE);
+        tools::SQLite3::Get().ChangeLanguage(fromId, RUSSIAN_LANG);
+        ToDoBot::Message answer = ToDoBot::Languages::Get().GetMessage(RUSSIAN_LANG, MAIN_MESSAGE);
         EditMessage(chatId, msgId, answer.text, answer.keyboard);
         break;
       }
       case Queries::language_en: {
-        tools::SQLite3::Get().ChangeLanguage(fromId, "en");
-        ToDoBot::Message answer = ToDoBot::Languages::Get().GetMessage("en", MAIN_MESSAGE);
+        tools::SQLite3::Get().ChangeLanguage(fromId, ENGLISH_LANG);
+        ToDoBot::Message answer = ToDoBot::Languages::Get().GetMessage(ENGLISH_LANG, MAIN_MESSAGE);
         EditMessage(chatId, msgId, answer.text, answer.keyboard);
         break;
       }
@@ -106,7 +110,9 @@ void ToDoBot::Bot::InitCallbacks() {
   m_Bot.getEvents().onCommand("start", OnStart);
   m_Bot.getEvents().onCommand("menu", OnMenu);
   m_Bot.getEvents().onCommand("language", OnLanguageSelect);
+
   m_Bot.getEvents().onAnyMessage(AnswerToMessage);
+  
   m_Bot.getEvents().onCallbackQuery(OnCallbackQuery);
 }
 
@@ -158,7 +164,9 @@ void ToDoBot::Bot::DeleteMessage(int64_t _chatId, int32_t _msgId) {
 
 void ToDoBot::Bot::SendMessage(int64_t _chatId, std::string _text, TgBot::InlineKeyboardMarkup::Ptr _keyboard) {
   try {
-    m_Bot.getApi().sendMessage(_chatId, _text, false, 0, _keyboard);
+    m_Bot.getApi().sendMessage(_chatId, _text, 
+                               false, 0, 
+                               _keyboard);
   } catch (std::exception& e) {
     tools::Logger::Error(TGBOT_ERROR, e.what());
   }
@@ -167,8 +175,9 @@ void ToDoBot::Bot::SendMessage(int64_t _chatId, std::string _text, TgBot::Inline
 void ToDoBot::Bot::EditMessage(int64_t _chatId, int32_t _msgId, const std::string &_text, TgBot::InlineKeyboardMarkup::Ptr _keyboard) {
   try {
     m_Bot.getApi().editMessageText(_text, _chatId, _msgId, 
-                                   "", "", false, _keyboard);
+                                   "", "", false, 
+                                   _keyboard);
   } catch (std::exception& e) {
-
+    tools::Logger::Error(TGBOT_ERROR, e.what());
   }
 }

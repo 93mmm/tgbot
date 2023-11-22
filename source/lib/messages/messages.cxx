@@ -7,9 +7,12 @@
 #define TEXT "text"
 #define BUTTONS "buttons"
 #define QUERY "query"
+#define URL "url"
+#define ENABLED "enabled"
 
-#define GET_ENABLED ["enabled"].get<bool>()
-#define GET_URL ["url"].get<std::string>()
+
+#define GET_ENABLED [ENABLED].get<bool>()
+#define GET_URL [URL].get<std::string>()
 #define GET_TEXT [TEXT].get<std::string>()
 #define GET_QUERY [QUERY].get<std::string>()
 
@@ -29,10 +32,11 @@ Query &Query::Get() { return s_Instance; }
 void Query::Init(const char *_filename) {
   std::ifstream file(_filename);
   if (not file.is_open()) {
-    tools::Logger::Error("file error", _filename);
+    tools::Logger::Error(FILE_ERROR, _filename);
     exit(1);
   }
-  json json_data = json::parse(file)["en"];
+
+  json json_data = json::parse(file)[ENGLISH_LANG];
   file.close();
   json main_menu_buttons = json_data[MAIN_MESSAGE][BUTTONS];
   json tasks_menu_buttons = json_data[TASKS_MESSAGE][BUTTONS];
@@ -105,19 +109,19 @@ TgBot::InlineKeyboardMarkup::Ptr Languages::InitKeyboard(const json &_data) {
     if (_data[i]GET_ENABLED) {
       TgBot::InlineKeyboardButton::Ptr btn(new TgBot::InlineKeyboardButton);
       row.push_back(btn);
-      btn->text = _data[i]["text"];
-      btn->callbackData = _data[i]["query"];
-      if (_data[i].contains("url")) {
+      btn->text = _data[i][TEXT];
+      btn->callbackData = _data[i][QUERY];
+      if (_data[i].contains(URL)) {
         btn->url = _data[i]GET_URL;
       }
     }
     
     if (_data[i + 1]GET_ENABLED) {
-      TgBot::InlineKeyboardButton::Ptr btn(new TgBot::InlineKeyboardButton); // ! maybe error
+      TgBot::InlineKeyboardButton::Ptr btn(new TgBot::InlineKeyboardButton);
       row.push_back(btn);
-      btn->text = _data[i + 1]["text"];
-      btn->callbackData = _data[i + 1]["query"];
-      if (_data[i + 1].contains("url")) {
+      btn->text = _data[i + 1][TEXT];
+      btn->callbackData = _data[i + 1][QUERY];
+      if (_data[i + 1].contains(URL)) {
         btn->url = _data[i + 1]GET_URL;
       }
     }
