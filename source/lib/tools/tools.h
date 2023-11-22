@@ -12,10 +12,10 @@
 #define FILE_ERROR "File error"
 #define DB_ERROR "Databse error"
 #define TGBOT_ERROR "Telegram bot error"
+#define QUERY_ERROR "Query error"
 
 namespace tools {
-  void concatenate(const char *_result, const char *_one, const char *_two);
-  std::string GetToken();
+  std::string GetToken(const char *_filename);
 
   class Logger { 
   public:

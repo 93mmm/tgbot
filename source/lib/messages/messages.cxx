@@ -4,7 +4,6 @@
 #include <cstdio>
 #include <fstream>
 
-#define JSON_FILENAME "json/languages.json"
 #define TEXT "text"
 #define BUTTONS "buttons"
 #define QUERY "query"
@@ -27,10 +26,10 @@ Query Query::s_Instance;
 
 Query &Query::Get() { return s_Instance; }
 
-void Query::Init() {
-  std::ifstream file(JSON_FILENAME);
+void Query::Init(const char *_filename) {
+  std::ifstream file(_filename);
   if (not file.is_open()) {
-    tools::Logger::Error("file error", JSON_FILENAME);
+    tools::Logger::Error("file error", _filename);
     exit(1);
   }
   json json_data = json::parse(file)["en"];
@@ -56,14 +55,17 @@ void Query::Init() {
   query_data[(int)Queries::language_ru] = language_buttons[1]GET_QUERY;
 }
 
-std::string Query::GetQuery(Queries _q) {
-  return query_data[(int)_q];
+Queries Query::GetQueryId(const std::string &_q) {
+  for (int i = 0; i < query_data.size(); i++) {
+    if (query_data[i].starts_with(_q)) { return (Queries)i; }
+  }
+  return Queries::__MaxNumber;
 }
 
-void Languages::Init() {
-  std::ifstream file(JSON_FILENAME);
+void Languages::Init(const char *_filename) {
+  std::ifstream file(_filename);
   if (not file.is_open()) {
-    tools::Logger::Error("file error", JSON_FILENAME);
+    tools::Logger::Error("file error", _filename);
     exit(1);
   }
   json data = json::parse(file);
@@ -92,13 +94,6 @@ void Languages::InitMessages(const json &_data) {
 
     lang[LANGUAGE_MESSAGE].text = messages[LANGUAGE_MESSAGE]GET_TEXT;
     lang[LANGUAGE_MESSAGE].keyboard = InitKeyboard(messages[LANGUAGE_MESSAGE][BUTTONS]);
-  }
-
-  for (const auto &[key, val] : m_Languages) {
-    for (const auto &[key1, val1] : val) {
-      printf("%s : %s : %s\n", key.c_str(), key1.c_str(), val1.text.c_str());
-
-    }
   }
 }
 
@@ -133,6 +128,5 @@ TgBot::InlineKeyboardMarkup::Ptr Languages::InitKeyboard(const json &_data) {
 }
 
 Message Languages::GetMessage(const std::string &_lang, const std::string &_msg) {
-  printf("%s : %s\n", _lang.c_str(), _msg.c_str());
   return m_Languages[_lang][_msg];
 }

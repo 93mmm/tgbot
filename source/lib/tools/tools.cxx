@@ -1,9 +1,7 @@
-#include <iostream> // TODO remove
+#include <iostream>
 #include <fstream>
 #include <assert.h>
 #include "tools.h"
-
-#define ENVIOREMENT_FILE "env.txt"
 
 #define RED "\x1b[38;5;196m"
 #define YELLOW "\x1b[38;5;118m"
@@ -27,20 +25,12 @@ static int FetchData(void *_data, int _sizeOfAnswer, char **_answer, char **_col
   return 0;
 }
 
-void tools::concatenate(const char *_result, const char *_one, const char *_two) {
-  assert(strlen(_one) + strlen(_two) < 99);
-  char buffer[100];
-  strcpy(buffer, _one);
-  strcat(buffer, _two);
-  _result = buffer;
-}
-
-std::string tools::GetToken() {
-  std::ifstream file(ENVIOREMENT_FILE);
-  std::string result;
+std::string tools::GetToken(const char *_filename) {
+  std::ifstream file(_filename);
+  std::string result = "Missing required file ";
 
   if (not file.is_open()) { 
-    tools::Logger::Error(FILE_ERROR, "Missing required file " ENVIOREMENT_FILE);
+    tools::Logger::Error(FILE_ERROR, (result + _filename).c_str());
     exit(1);
   }
   
@@ -122,5 +112,10 @@ std::string tools::SQLite3::GetLanguage(int64_t _id) {
   std::string request = "SELECT Language FROM Users WHERE UserID = " + std::to_string(_id);
 
   ExecuteRequest(request.c_str(), &data);
+
+  if (not data.data["Language"].size()) {
+    return "en";
+  }
+
   return data.data["Language"][0];
 }

@@ -37,8 +37,8 @@ class Query {
 public:
   Query(const Query &) = delete;
   static Query &Get();
-  void Init();
-  std::string GetQuery(Queries _q);
+  void Init(const char *_filename);
+  Queries GetQueryId(const std::string &_q);
 
 private:
   Query() : query_data((int)Queries::__MaxNumber) {}
@@ -60,7 +60,7 @@ namespace ToDoBot {
 
     static Languages &Get();
 
-    void Init();
+    void Init(const char *_filename);
     Message GetMessage(const std::string &_lang, const std::string &_msg);
 
   private:

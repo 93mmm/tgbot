@@ -2,10 +2,10 @@
 #include "../tools/tools.h"
 #include "../messages/messages.h"
 
-#include <_types/_uint64_t.h>
+#include <cstdio>
 #include <exception>
 
-ToDoBot::Bot::Bot() : m_Bot(tools::GetToken()) {
+ToDoBot::Bot::Bot(std::string _token) : m_Bot(_token) {
   InitCommands();
   InitCallbacks();
 }
@@ -21,14 +21,13 @@ void ToDoBot::Bot::InitCallbacks() {
   };
 
   auto OnStart = [&](TgBot::Message::Ptr _message) { // TODO: greet, select language
-    uint64_t id = _message->from->id;
+    int64_t id = _message->from->id;
     tools::SQLite3::Get().AddUser(id);
-    tools::SQLite3::Get().GetLanguage(id);
 
     ToDoBot::Message answer = ToDoBot::Languages::Get().GetMessage(tools::SQLite3::Get().GetLanguage(id), LANGUAGE_MESSAGE);
 
     DeleteMessage(_message->chat->id, _message->messageId);
-    m_Bot.getApi().sendMessage(_message->chat->id, answer.text, false, 0, answer.keyboard);
+    SendMessage(_message->chat->id, answer.text, answer.keyboard);
   };
 
   auto OnMenu = [&](TgBot::Message::Ptr _message) {
@@ -36,56 +35,71 @@ void ToDoBot::Bot::InitCallbacks() {
     ToDoBot::Message answer = ToDoBot::Languages::Get().GetMessage(tools::SQLite3::Get().GetLanguage(id), MAIN_MESSAGE);
 
     DeleteMessage(id, _message->messageId);
-    m_Bot.getApi().sendMessage(id, answer.text, false, 0, answer.keyboard);
+    SendMessage(id, answer.text, answer.keyboard);
   };
 
   auto OnLanguageSelect = [&](TgBot::Message::Ptr _message) {
-    // TODO: select language
-    DeleteMessage(_message->chat->id, _message->messageId);
+    int64_t _chatId = _message->chat->id;
+    ToDoBot::Message answer = ToDoBot::Languages::Get().GetMessage(tools::SQLite3::Get().GetLanguage(_chatId), LANGUAGE_MESSAGE);
+    DeleteMessage(_chatId, _message->messageId);
+    SendMessage(_chatId, answer.text, answer.keyboard);
   };
 
   auto AnswerToMessage = [&](TgBot::Message::Ptr _message) {
     if (IsMessageCommand(_message->text)) { return; }
+  
     DeleteMessage(_message->chat->id, _message->messageId);
-    // m_Bot.getApi().sendMessage(_message->chat->id, "Your message is: " + _message->text, false, _message->messageId);
   };
 
   auto OnCallbackQuery = [&](TgBot::CallbackQuery::Ptr _query) {
-    int64_t chat_id = _query->message->chat->id;
-    int32_t msq_id = _query->message->messageId;
-    std::string lang = tools::SQLite3::Get().GetLanguage(chat_id);
+    int64_t chatId = _query->message->chat->id;
+    int64_t fromId = _query->from->id;
+    int32_t msgId = _query->message->messageId;
+    std::string lang = tools::SQLite3::Get().GetLanguage(chatId);
     
-    // TODO: edit order
-    if (_query->data.starts_with(Query::Get().GetQuery(Queries::water_menu))) {
-      ToDoBot::Message answer = ToDoBot::Languages::Get().GetMessage(lang, WATER_MESSAGE);
-      m_Bot.getApi().editMessageText(answer.text, chat_id,
-                                     msq_id, "", "", false,
-                                     answer.keyboard);
+    Queries query = Query::Get().GetQueryId(_query->data);
 
-    } else if (_query->data.starts_with(Query::Get().GetQuery(Queries::tasks_menu))) {
-      ToDoBot::Message answer = ToDoBot::Languages::Get().GetMessage(lang, TASKS_MESSAGE);
-      m_Bot.getApi().editMessageText(answer.text, chat_id,
-                                     msq_id, "", "", false,
-                                     answer.keyboard);
-
-    } else if (_query->data.starts_with(Query::Get().GetQuery(Queries::main_menu))) {
-      ToDoBot::Message answer = ToDoBot::Languages::Get().GetMessage(lang, MAIN_MESSAGE);
-      m_Bot.getApi().editMessageText(answer.text, chat_id,
-                                     msq_id, "", "", false,
-                                     answer.keyboard);
-    } else if (_query->data.starts_with(Query::Get().GetQuery(Queries::language_en))) {
-      tools::SQLite3::Get().ChangeLanguage(_query->from->id, "en");
-      ToDoBot::Message answer = ToDoBot::Languages::Get().GetMessage("en", MAIN_MESSAGE);
-      m_Bot.getApi().editMessageText(answer.text, chat_id,
-                                     msq_id, "", "", false,
-                                     answer.keyboard);
-    } else if (_query->data.starts_with(Query::Get().GetQuery(Queries::language_ru))) {
-      printf("%s\n", _query->data.c_str());
-      tools::SQLite3::Get().ChangeLanguage(_query->from->id, "ru");
-      ToDoBot::Message answer = ToDoBot::Languages::Get().GetMessage("ru", MAIN_MESSAGE);
-      m_Bot.getApi().editMessageText(answer.text, chat_id,
-                                     msq_id, "", "", false,
-                                     answer.keyboard);
+    switch (query) {
+      case Queries::main_menu: {
+        ToDoBot::Message answer = ToDoBot::Languages::Get().GetMessage(lang, MAIN_MESSAGE);
+        EditMessage(chatId, msgId, answer.text, answer.keyboard);
+        break;
+      }
+      case Queries::tasks_menu: {
+        ToDoBot::Message answer = ToDoBot::Languages::Get().GetMessage(lang, TASKS_MESSAGE);
+        EditMessage(chatId, msgId, answer.text, answer.keyboard);
+        break;
+      }
+      case Queries::water_menu: {
+        ToDoBot::Message answer = ToDoBot::Languages::Get().GetMessage(lang, WATER_MESSAGE);
+        EditMessage(chatId, msgId, answer.text, answer.keyboard);
+        break;
+      }
+      case Queries::contact_with_creator: { break; }
+      case Queries::add_100:  { break; }
+      case Queries::add_200: { break; }
+      case Queries::add_300: { break; }
+      case Queries::add_400: { break; }
+      case Queries::add_other_volume: { break; }
+      case Queries::add_task: { break; }
+      case Queries::send_current_tasks: { break; }
+      case Queries::send_completed_tasks: { break; }
+      case Queries::language_ru: {
+        tools::SQLite3::Get().ChangeLanguage(fromId, "ru");
+        ToDoBot::Message answer = ToDoBot::Languages::Get().GetMessage("ru", MAIN_MESSAGE);
+        EditMessage(chatId, msgId, answer.text, answer.keyboard);
+        break;
+      }
+      case Queries::language_en: {
+        tools::SQLite3::Get().ChangeLanguage(fromId, "en");
+        ToDoBot::Message answer = ToDoBot::Languages::Get().GetMessage("en", MAIN_MESSAGE);
+        EditMessage(chatId, msgId, answer.text, answer.keyboard);
+        break;
+      }
+      case Queries::__MaxNumber: {
+        tools::Logger::Error(QUERY_ERROR, "Unhandled Query");
+        break;
+      }
     }
   };
 
@@ -139,5 +153,22 @@ void ToDoBot::Bot::DeleteMessage(int64_t _chatId, int32_t _msgId) {
     m_Bot.getApi().deleteMessage(_chatId, _msgId);
   } catch (std::exception& e) {
     tools::Logger::Error(TGBOT_ERROR, e.what());
+  }
+}
+
+void ToDoBot::Bot::SendMessage(int64_t _chatId, std::string _text, TgBot::InlineKeyboardMarkup::Ptr _keyboard) {
+  try {
+    m_Bot.getApi().sendMessage(_chatId, _text, false, 0, _keyboard);
+  } catch (std::exception& e) {
+    tools::Logger::Error(TGBOT_ERROR, e.what());
+  }
+}
+
+void ToDoBot::Bot::EditMessage(int64_t _chatId, int32_t _msgId, const std::string &_text, TgBot::InlineKeyboardMarkup::Ptr _keyboard) {
+  try {
+    m_Bot.getApi().editMessageText(_text, _chatId, _msgId, 
+                                   "", "", false, _keyboard);
+  } catch (std::exception& e) {
+
   }
 }
